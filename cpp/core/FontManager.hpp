@@ -1,0 +1,47 @@
+#pragma once
+
+#include "TrueTypeFont.hpp"
+
+#include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+namespace nitropdf {
+
+struct ResolvedFont {
+  std::shared_ptr<const TrueTypeFont> font;
+  bool syntheticBold = false;
+  bool syntheticItalic = false;
+};
+
+/** Process-wide font registry and cache, shared by all render threads. */
+class FontManager {
+public:
+  static FontManager& shared();
+
+  /** Throws if the file can't be read or isn't a supported font. */
+  void registerFont(const std::string& family, const std::string& path, int weight, bool italic);
+
+  /** Resolves a CSS `font-family` list such as `"Inter", Arial, sans-serif`. Throws if nothing matches. */
+  ResolvedFont resolve(const std::string& familyList, int weight, bool italic);
+
+private:
+  struct Registered {
+    std::string family;
+    int weight;
+    bool italic;
+    std::shared_ptr<const TrueTypeFont> font;
+  };
+
+  bool resolveFamily(const std::string& family, int weight, bool italic, ResolvedFont& out);
+  std::shared_ptr<const TrueTypeFont> systemFont(const std::string& family, bool bold, bool italic);
+
+  std::mutex mutex_;
+  std::vector<Registered> registered_;
+  std::unordered_map<std::string, std::shared_ptr<const TrueTypeFont>> systemCache_;
+  std::unordered_map<std::string, ResolvedFont> resolvedCache_;
+};
+
+} // namespace nitropdf

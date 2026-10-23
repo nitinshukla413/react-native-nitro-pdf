@@ -1,0 +1,5 @@
+litehtml v0.10 (9bc84b8b8d15a4e50f18b327aa30955048b441c2) with bundled gumbo.
+Layout flattened so every quoted #include resolves next to the including file
+(CocoaPods header maps are case-insensitive, e.g. gumbo "error.h" would hit React "Error.h"):
+  include/litehtml/  litehtml headers + sources
+  gumbo/include/gumbo/  gumbo headers + sources
