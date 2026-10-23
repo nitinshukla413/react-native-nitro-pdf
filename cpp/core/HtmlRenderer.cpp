@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -788,4 +788,4 @@ RenderResult renderHtmlToPdf(const RenderOptions& options) {
   return result;
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

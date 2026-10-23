@@ -15,12 +15,7 @@
 #include <fbjni/fbjni.h>
 #include <NitroModules/HybridObjectRegistry.hpp>
 
-#include "JHybridPdfViewSpec.hpp"
-#include "JFunc_void_double.hpp"
-#include "JFunc_void_std__string.hpp"
-#include "views/JHybridPdfViewStateUpdater.hpp"
 #include "HybridNitroPdf.hpp"
-#include <NitroModules/DefaultConstructableObject.hpp>
 
 namespace margelo::nitro::nitropdf {
 
@@ -30,24 +25,13 @@ int initialize(JavaVM* vm) {
   });
 }
 
-struct JHybridPdfViewSpecImpl: public jni::JavaClass<JHybridPdfViewSpecImpl, JHybridPdfViewSpec::JavaPart> {
-  static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/nitropdf/HybridPdfView;";
-  static std::shared_ptr<JHybridPdfViewSpec> create() {
-    static const auto constructorFn = javaClassStatic()->getConstructor<JHybridPdfViewSpecImpl::javaobject()>();
-    jni::local_ref<JHybridPdfViewSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
-    return javaPart->getJHybridPdfViewSpec();
-  }
-};
+
 
 void registerAllNatives() {
   using namespace margelo::nitro;
   using namespace margelo::nitro::nitropdf;
 
   // Register native JNI methods
-  margelo::nitro::nitropdf::JHybridPdfViewSpec::CxxPart::registerNatives();
-  margelo::nitro::nitropdf::JFunc_void_double_cxx::registerNatives();
-  margelo::nitro::nitropdf::JFunc_void_std__string_cxx::registerNatives();
-  margelo::nitro::nitropdf::views::JHybridPdfViewStateUpdater::registerNatives();
 
   // Register Nitro Hybrid Objects
   HybridObjectRegistry::registerHybridObjectConstructor(
@@ -57,12 +41,6 @@ void registerAllNatives() {
                     "The HybridObject \"HybridNitroPdf\" is not default-constructible! "
                     "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
       return std::make_shared<HybridNitroPdf>();
-    }
-  );
-  HybridObjectRegistry::registerHybridObjectConstructor(
-    "PdfView",
-    []() -> std::shared_ptr<HybridObject> {
-      return JHybridPdfViewSpecImpl::create();
     }
   );
 }

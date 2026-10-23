@@ -8,42 +8,10 @@
 #include "NitroPdf-Swift-Cxx-Bridge.hpp"
 
 // Include C++ implementation defined types
-#include "HybridPdfViewSpecSwift.hpp"
-#include "NitroPdf-Swift-Cxx-Umbrella.hpp"
-#include <NitroModules/NitroDefines.hpp>
+
 
 namespace margelo::nitro::nitropdf::bridge::swift {
 
-  // pragma MARK: std::function<void(double /* pageCount */)>
-  Func_void_double create_Func_void_double(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = NitroPdf::Func_void_double::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](double pageCount) mutable -> void {
-      swiftClosure.call(pageCount);
-    };
-  }
   
-  // pragma MARK: std::function<void(const std::string& /* message */)>
-  Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = NitroPdf::Func_void_std__string::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const std::string& message) mutable -> void {
-      swiftClosure.call(message);
-    };
-  }
-  
-  // pragma MARK: std::shared_ptr<HybridPdfViewSpec>
-  std::shared_ptr<HybridPdfViewSpec> create_std__shared_ptr_HybridPdfViewSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
-    NitroPdf::HybridPdfViewSpec_cxx swiftPart = NitroPdf::HybridPdfViewSpec_cxx::fromUnsafe(swiftUnsafePointer);
-    return std::make_shared<margelo::nitro::nitropdf::HybridPdfViewSpecSwift>(swiftPart);
-  }
-  void* NON_NULL get_std__shared_ptr_HybridPdfViewSpec_(std__shared_ptr_HybridPdfViewSpec_ cppType) {
-    std::shared_ptr<margelo::nitro::nitropdf::HybridPdfViewSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::nitropdf::HybridPdfViewSpecSwift>(cppType);
-    #ifdef NITRO_DEBUG
-    if (swiftWrapper == nullptr) [[unlikely]] {
-      throw std::runtime_error("Class \"HybridPdfViewSpec\" is not implemented in Swift!");
-    }
-    #endif
-    NitroPdf::HybridPdfViewSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
-    return swiftPart.toUnsafe();
-  }
 
 } // namespace margelo::nitro::nitropdf::bridge::swift

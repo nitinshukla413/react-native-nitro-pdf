@@ -35,11 +35,8 @@ target_sources(
   # Shared Nitrogen C++ sources
   ../nitrogen/generated/shared/c++/HybridPdfDocumentSpec.cpp
   ../nitrogen/generated/shared/c++/HybridNitroPdfSpec.cpp
-  ../nitrogen/generated/shared/c++/HybridPdfViewSpec.cpp
-  ../nitrogen/generated/shared/c++/views/HybridPdfViewComponent.cpp
   # Android-specific Nitrogen C++ sources
-  ../nitrogen/generated/android/c++/JHybridPdfViewSpec.cpp
-  ../nitrogen/generated/android/c++/views/JHybridPdfViewStateUpdater.cpp
+
 )
 
 # From node_modules/react-native/ReactAndroid/cmake-utils/folly-flags.cmake

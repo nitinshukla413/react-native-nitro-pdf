@@ -8,16 +8,10 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-// Forward declaration of `HybridPdfViewSpec` to properly resolve imports.
-namespace margelo::nitro::nitropdf { class HybridPdfViewSpec; }
+
 
 // Include C++ defined types
-#include "HybridPdfViewSpec.hpp"
-#include <NitroModules/ArrayBuffer.hpp>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <string>
+
 
 // C++ helpers for Swift
 #include "NitroPdf-Swift-Cxx-Bridge.hpp"
@@ -29,8 +23,7 @@ namespace margelo::nitro::nitropdf { class HybridPdfViewSpec; }
 #include <NitroModules/DateToChronoDate.hpp>
 
 // Forward declarations of Swift defined types
-// Forward declaration of `HybridPdfViewSpec_cxx` to properly resolve imports.
-namespace NitroPdf { class HybridPdfViewSpec_cxx; }
+
 
 // Include Swift defined types
 #if __has_include("NitroPdf-Swift.h")

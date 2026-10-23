@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 /** Immutable, thread-safe view of a TrueType (glyf) or OpenType (CFF) font program. */
 class TrueTypeFont {
@@ -81,4 +81,4 @@ private:
   bool symbolCmap_ = false;
 };
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

@@ -33,6 +33,8 @@ export interface PdfDocument extends HybridObject<{
   readonly byteLength: number
   /** Wraps the native PDF bytes without copying. */
   toArrayBuffer(): ArrayBuffer
+  /** The PDF as a base64 string, e.g. for a `data:application/pdf;base64,` URI. */
+  toBase64(): string
   /** Writes the PDF to an absolute path or file:// URL. */
   saveToFile(path: string): Promise<void>
 }

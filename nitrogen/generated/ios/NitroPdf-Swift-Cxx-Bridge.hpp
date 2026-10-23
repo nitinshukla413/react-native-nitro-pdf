@@ -8,23 +8,13 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-// Forward declaration of `ArrayBufferHolder` to properly resolve imports.
-namespace NitroModules { class ArrayBufferHolder; }
-// Forward declaration of `HybridPdfViewSpec` to properly resolve imports.
-namespace margelo::nitro::nitropdf { class HybridPdfViewSpec; }
+
 
 // Forward declarations of Swift defined types
-// Forward declaration of `HybridPdfViewSpec_cxx` to properly resolve imports.
-namespace NitroPdf { class HybridPdfViewSpec_cxx; }
+
 
 // Include C++ defined types
-#include "HybridPdfViewSpec.hpp"
-#include <NitroModules/ArrayBuffer.hpp>
-#include <NitroModules/ArrayBufferHolder.hpp>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <string>
+
 
 /**
  * Contains specialized versions of C++ templated types so they can be accessed from Swift,
@@ -32,120 +22,6 @@ namespace NitroPdf { class HybridPdfViewSpec_cxx; }
  */
 namespace margelo::nitro::nitropdf::bridge::swift {
 
-  // pragma MARK: std::optional<std::shared_ptr<ArrayBuffer>>
-  /**
-   * Specialized version of `std::optional<std::shared_ptr<ArrayBuffer>>`.
-   */
-  using std__optional_std__shared_ptr_ArrayBuffer__ = std::optional<std::shared_ptr<ArrayBuffer>>;
-  inline std::optional<std::shared_ptr<ArrayBuffer>> create_std__optional_std__shared_ptr_ArrayBuffer__(const std::shared_ptr<ArrayBuffer>& value) noexcept {
-    return std::optional<std::shared_ptr<ArrayBuffer>>(value);
-  }
-  inline bool has_value_std__optional_std__shared_ptr_ArrayBuffer__(const std::optional<std::shared_ptr<ArrayBuffer>>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::shared_ptr<ArrayBuffer> get_std__optional_std__shared_ptr_ArrayBuffer__(const std::optional<std::shared_ptr<ArrayBuffer>>& optional) noexcept {
-    return optional.value();
-  }
   
-  // pragma MARK: std::optional<std::string>
-  /**
-   * Specialized version of `std::optional<std::string>`.
-   */
-  using std__optional_std__string_ = std::optional<std::string>;
-  inline std::optional<std::string> create_std__optional_std__string_(const std::string& value) noexcept {
-    return std::optional<std::string>(value);
-  }
-  inline bool has_value_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::string get_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
-    return optional.value();
-  }
-  
-  // pragma MARK: std::function<void(double /* pageCount */)>
-  /**
-   * Specialized version of `std::function<void(double)>`.
-   */
-  using Func_void_double = std::function<void(double /* pageCount */)>;
-  /**
-   * Wrapper class for a `std::function<void(double / * pageCount * /)>`, this can be used from Swift.
-   */
-  class Func_void_double_Wrapper final {
-  public:
-    explicit Func_void_double_Wrapper(std::function<void(double /* pageCount */)>&& func): _function(std::make_unique<std::function<void(double /* pageCount */)>>(std::move(func))) {}
-    inline void call(double pageCount) const noexcept {
-      _function->operator()(pageCount);
-    }
-  private:
-    std::unique_ptr<std::function<void(double /* pageCount */)>> _function;
-  } SWIFT_NONCOPYABLE;
-  Func_void_double create_Func_void_double(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_double_Wrapper wrap_Func_void_double(Func_void_double value) noexcept {
-    return Func_void_double_Wrapper(std::move(value));
-  }
-  
-  // pragma MARK: std::optional<std::function<void(double /* pageCount */)>>
-  /**
-   * Specialized version of `std::optional<std::function<void(double / * pageCount * /)>>`.
-   */
-  using std__optional_std__function_void_double____pageCount______ = std::optional<std::function<void(double /* pageCount */)>>;
-  inline std::optional<std::function<void(double /* pageCount */)>> create_std__optional_std__function_void_double____pageCount______(const std::function<void(double /* pageCount */)>& value) noexcept {
-    return std::optional<std::function<void(double /* pageCount */)>>(value);
-  }
-  inline bool has_value_std__optional_std__function_void_double____pageCount______(const std::optional<std::function<void(double /* pageCount */)>>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::function<void(double /* pageCount */)> get_std__optional_std__function_void_double____pageCount______(const std::optional<std::function<void(double /* pageCount */)>>& optional) noexcept {
-    return optional.value();
-  }
-  
-  // pragma MARK: std::function<void(const std::string& /* message */)>
-  /**
-   * Specialized version of `std::function<void(const std::string&)>`.
-   */
-  using Func_void_std__string = std::function<void(const std::string& /* message */)>;
-  /**
-   * Wrapper class for a `std::function<void(const std::string& / * message * /)>`, this can be used from Swift.
-   */
-  class Func_void_std__string_Wrapper final {
-  public:
-    explicit Func_void_std__string_Wrapper(std::function<void(const std::string& /* message */)>&& func): _function(std::make_unique<std::function<void(const std::string& /* message */)>>(std::move(func))) {}
-    inline void call(std::string message) const noexcept {
-      _function->operator()(message);
-    }
-  private:
-    std::unique_ptr<std::function<void(const std::string& /* message */)>> _function;
-  } SWIFT_NONCOPYABLE;
-  Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_std__string_Wrapper wrap_Func_void_std__string(Func_void_std__string value) noexcept {
-    return Func_void_std__string_Wrapper(std::move(value));
-  }
-  
-  // pragma MARK: std::optional<std::function<void(const std::string& /* message */)>>
-  /**
-   * Specialized version of `std::optional<std::function<void(const std::string& / * message * /)>>`.
-   */
-  using std__optional_std__function_void_const_std__string_____message______ = std::optional<std::function<void(const std::string& /* message */)>>;
-  inline std::optional<std::function<void(const std::string& /* message */)>> create_std__optional_std__function_void_const_std__string_____message______(const std::function<void(const std::string& /* message */)>& value) noexcept {
-    return std::optional<std::function<void(const std::string& /* message */)>>(value);
-  }
-  inline bool has_value_std__optional_std__function_void_const_std__string_____message______(const std::optional<std::function<void(const std::string& /* message */)>>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::function<void(const std::string& /* message */)> get_std__optional_std__function_void_const_std__string_____message______(const std::optional<std::function<void(const std::string& /* message */)>>& optional) noexcept {
-    return optional.value();
-  }
-  
-  // pragma MARK: std::shared_ptr<HybridPdfViewSpec>
-  /**
-   * Specialized version of `std::shared_ptr<HybridPdfViewSpec>`.
-   */
-  using std__shared_ptr_HybridPdfViewSpec_ = std::shared_ptr<HybridPdfViewSpec>;
-  std::shared_ptr<HybridPdfViewSpec> create_std__shared_ptr_HybridPdfViewSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
-  void* NON_NULL get_std__shared_ptr_HybridPdfViewSpec_(std__shared_ptr_HybridPdfViewSpec_ cppType);
-  
-  // pragma MARK: std::weak_ptr<HybridPdfViewSpec>
-  using std__weak_ptr_HybridPdfViewSpec_ = std::weak_ptr<HybridPdfViewSpec>;
-  inline std__weak_ptr_HybridPdfViewSpec_ weakify_std__shared_ptr_HybridPdfViewSpec_(const std::shared_ptr<HybridPdfViewSpec>& strong) noexcept { return strong; }
 
 } // namespace margelo::nitro::nitropdf::bridge::swift

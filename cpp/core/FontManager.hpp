@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 struct ResolvedFont {
   std::shared_ptr<const TrueTypeFont> font;
@@ -44,4 +44,4 @@ private:
   std::unordered_map<std::string, ResolvedFont> resolvedCache_;
 };
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

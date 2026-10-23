@@ -11,8 +11,8 @@ namespace margelo::nitro::nitropdf {
 
 namespace {
 
-::nitropdf::RenderOptions toRenderOptions(const PdfOptions& options) {
-  ::nitropdf::RenderOptions render;
+RenderOptions toRenderOptions(const PdfOptions& options) {
+  RenderOptions render;
   render.html = options.html;
   render.baseUrl = options.baseUrl.value_or("");
 
@@ -51,7 +51,7 @@ namespace {
 std::shared_ptr<Promise<std::shared_ptr<HybridPdfDocumentSpec>>> HybridNitroPdf::generate(const PdfOptions& options) {
   return Promise<std::shared_ptr<HybridPdfDocumentSpec>>::async(
       [render = toRenderOptions(options)]() -> std::shared_ptr<HybridPdfDocumentSpec> {
-        auto result = ::nitropdf::renderHtmlToPdf(render);
+        auto result = renderHtmlToPdf(render);
         return std::make_shared<HybridPdfDocument>(std::move(result.pdf), result.pageCount);
       });
 }
@@ -59,7 +59,7 @@ std::shared_ptr<Promise<std::shared_ptr<HybridPdfDocumentSpec>>> HybridNitroPdf:
 void HybridNitroPdf::registerFont(const std::string& family, const std::string& path, double weight, bool italic) {
   if (family.empty()) throw std::invalid_argument("registerFont: family must not be empty");
   if (!(weight >= 1 && weight <= 1000)) throw std::invalid_argument("registerFont: weight must be between 1 and 1000");
-  ::nitropdf::FontManager::shared().registerFont(family, path, int(weight), italic);
+  FontManager::shared().registerFont(family, path, int(weight), italic);
 }
 
 } // namespace margelo::nitro::nitropdf

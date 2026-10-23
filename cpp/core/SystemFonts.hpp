@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 /**
  * Implemented once per platform (ios/SystemFonts.mm, android/src/main/cpp/SystemFonts.cpp).
@@ -14,4 +14,4 @@ namespace nitropdf {
  */
 std::vector<uint8_t> loadSystemFont(const std::string& family, bool bold, bool italic);
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

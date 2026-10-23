@@ -16,8 +16,8 @@
 
 
 #include <NitroModules/ArrayBuffer.hpp>
-#include <NitroModules/Promise.hpp>
 #include <string>
+#include <NitroModules/Promise.hpp>
 
 namespace margelo::nitro::nitropdf {
 
@@ -52,6 +52,7 @@ namespace margelo::nitro::nitropdf {
     public:
       // Methods
       virtual std::shared_ptr<ArrayBuffer> toArrayBuffer() = 0;
+      virtual std::string toBase64() = 0;
       virtual std::shared_ptr<Promise<void>> saveToFile(const std::string& path) = 0;
 
     protected:

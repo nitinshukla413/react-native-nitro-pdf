@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <stdexcept>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -119,4 +119,4 @@ std::shared_ptr<const TrueTypeFont> FontManager::systemFont(const std::string& f
   return font;
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

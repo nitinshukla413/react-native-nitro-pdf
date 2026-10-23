@@ -7,11 +7,10 @@
 
 #import <Foundation/Foundation.h>
 #import <NitroModules/HybridObjectRegistry.hpp>
-#import "NitroPdf-Swift-Cxx-Umbrella.hpp"
+
 #import <type_traits>
 
 #include "HybridNitroPdf.hpp"
-#include "HybridPdfViewSpecSwift.hpp"
 
 @interface NitroPdfAutolinking : NSObject
 @end
@@ -29,13 +28,6 @@
                     "The HybridObject \"HybridNitroPdf\" is not default-constructible! "
                     "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
       return std::make_shared<HybridNitroPdf>();
-    }
-  );
-  HybridObjectRegistry::registerHybridObjectConstructor(
-    "PdfView",
-    []() -> std::shared_ptr<HybridObject> {
-      std::shared_ptr<HybridPdfViewSpec> hybridObject = NitroPdf::NitroPdfAutolinking::createPdfView();
-      return hybridObject;
     }
   );
 }

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 /** Decodes one code point from a NUL-terminated UTF-8 string and advances `s`. Invalid input yields U+FFFD. */
 inline uint32_t decodeUtf8(const char*& s) {
@@ -69,4 +69,4 @@ inline void appendUtf16Hex(std::string& out, uint32_t cp) {
   }
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

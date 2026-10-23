@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 struct RenderOptions {
   std::string html;
@@ -28,4 +28,4 @@ struct RenderResult {
 /** Lays out the HTML with litehtml and paginates it into a PDF. Safe to call from any thread. */
 RenderResult renderHtmlToPdf(const RenderOptions& options);
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 struct PdfImage {
   int width = 0;
@@ -23,4 +23,4 @@ struct PdfImage {
 /** Supports JPEG (passthrough, no re-encode) and PNG. Returns nullptr for anything else. */
 std::shared_ptr<const PdfImage> decodeImage(std::vector<uint8_t> bytes);
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

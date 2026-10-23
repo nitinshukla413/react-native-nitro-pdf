@@ -12,15 +12,5 @@ import NitroModules
 public final class NitroPdfAutolinking {
   public typealias bridge = margelo.nitro.nitropdf.bridge.swift
 
-  public static func createPdfView() -> bridge.std__shared_ptr_HybridPdfViewSpec_ {
-    let hybridObject = HybridPdfView()
-    return { () -> bridge.std__shared_ptr_HybridPdfViewSpec_ in
-      let __cxxWrapped = hybridObject.getCxxWrapper()
-      return __cxxWrapped.getCxxPart()
-    }()
-  }
   
-  public static func isPdfViewRecyclable() -> Bool {
-    return HybridPdfView.self is any RecyclableView.Type
-  }
 }

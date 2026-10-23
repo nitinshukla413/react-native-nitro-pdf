@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 /** Appends `value` with up to 3 decimals, independent of the C locale. */
 void appendNumber(std::string& out, double value);
@@ -54,4 +54,4 @@ private:
   std::string title_;
 };
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

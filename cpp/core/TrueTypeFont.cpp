@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -393,4 +393,4 @@ std::vector<uint8_t> TrueTypeFont::assemble(std::vector<Table> tables) {
   return out;
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

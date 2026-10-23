@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cctype>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -62,4 +62,4 @@ std::vector<uint8_t> loadSystemFont(const std::string& family, bool bold, bool i
   return {};
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

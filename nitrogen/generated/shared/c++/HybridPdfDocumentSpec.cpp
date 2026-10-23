@@ -17,6 +17,7 @@ namespace margelo::nitro::nitropdf {
       prototype.registerHybridGetter("pageCount", &HybridPdfDocumentSpec::getPageCount);
       prototype.registerHybridGetter("byteLength", &HybridPdfDocumentSpec::getByteLength);
       prototype.registerHybridMethod("toArrayBuffer", &HybridPdfDocumentSpec::toArrayBuffer);
+      prototype.registerHybridMethod("toBase64", &HybridPdfDocumentSpec::toBase64);
       prototype.registerHybridMethod("saveToFile", &HybridPdfDocumentSpec::saveToFile);
     });
   }

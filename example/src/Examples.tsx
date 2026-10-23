@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
-import { NitroPdf, PdfView, type PageSize } from 'react-native-nitro-pdf';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import { NitroPdf, type PageSize } from 'react-native-nitro-pdf';
+import Pdf from 'react-native-pdf';
 import { invoiceHtml, receiptHtml } from './samples';
 
 declare const performance: { now(): number };
@@ -13,9 +15,12 @@ const DOCUMENTS: Record<string, string> = {
 const PAGE_SIZES: PageSize[] = ['A4', 'Letter', 'Legal'];
 // PDF points: 72 pt = 1 inch.
 const MARGINS: Record<string, number> = { None: 0, '0.5 in': 36, '1 in': 72 };
+const OUTPUTS = ['Base64', 'File'] as const;
+type Output = (typeof OUTPUTS)[number];
 
 type Result = {
-  data: ArrayBuffer;
+  id: number;
+  uri: string;
   pages: number;
   kb: number;
   header: string;
@@ -58,11 +63,14 @@ function Choice<T extends string>({
   );
 }
 
+let nextId = 0;
+
 export function Examples() {
   const [sample, setSample] = useState('Invoice · 20 rows');
   const [pageSize, setPageSize] = useState<PageSize>('A4');
-  const [landscape, setLandscape] = useState(false);
   const [margin, setMargin] = useState('0.5 in');
+  const [landscape, setLandscape] = useState(false);
+  const [output, setOutput] = useState<Output>('Base64');
   const [result, setResult] = useState<Result>();
   const [error, setError] = useState<string>();
 
@@ -80,15 +88,25 @@ export function Examples() {
       });
       const ms = performance.now() - start;
 
-      // A zero-copy view of the PDF bytes: upload, hash or display them without touching disk.
-      // Use `await pdf.saveToFile(path)` when you do need a file.
-      const data = pdf.toArrayBuffer();
-      const header = String.fromCharCode(...new Uint8Array(data, 0, 8));
+      // react-native-pdf displays a base64 data URI or a file.
+      let uri: string;
+      if (output === 'Base64') {
+        uri = `data:application/pdf;base64,${pdf.toBase64()}`;
+      } else {
+        const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/example.pdf`;
+        await pdf.saveToFile(path);
+        uri = `file://${path}`;
+      }
+
+      // Raw bytes without a copy, e.g. for uploads, hashing or storage.
+      const bytes = new Uint8Array(pdf.toArrayBuffer(), 0, 8);
+      const header = String.fromCharCode(...bytes).trim();
 
       if (!cancelled) {
         setError(undefined);
         setResult({
-          data,
+          id: nextId++,
+          uri,
           pages: pdf.pageCount,
           kb: Math.round(pdf.byteLength / 1024),
           header,
@@ -101,7 +119,7 @@ export function Examples() {
     return () => {
       cancelled = true;
     };
-  }, [sample, pageSize, landscape, margin]);
+  }, [sample, pageSize, margin, landscape, output]);
 
   return (
     <View style={styles.container}>
@@ -123,6 +141,12 @@ export function Examples() {
         value={margin}
         onChange={setMargin}
       />
+      <Choice
+        label="Output for the viewer"
+        options={OUTPUTS}
+        value={output}
+        onChange={setOutput}
+      />
       <View style={[styles.option, styles.row]}>
         <Text style={styles.label}>Landscape</Text>
         <Switch value={landscape} onValueChange={setLandscape} />
@@ -132,19 +156,22 @@ export function Examples() {
         {error ??
           (result
             ? `${result.pages} ${result.pages === 1 ? 'page' : 'pages'} · ${result.kb} KB · ` +
-              `generated in ${result.ms.toFixed(1)} ms · ${result.header.trim()}`
+              `generated in ${result.ms.toFixed(1)} ms · ${result.header}`
             : 'Generating…')}
       </Text>
 
       <View style={styles.preview}>
         {result && (
-          <PdfView
+          <Pdf
+            key={result.id}
+            source={{ uri: result.uri, cache: false }}
             style={styles.pdf}
-            data={result.data}
-            onError={message => setError(message)}
+            trustAllCerts={false}
+            onError={e => setError(String(e))}
           />
         )}
       </View>
+      <Text style={styles.caption}>Preview by react-native-pdf</Text>
     </View>
   );
 }
@@ -176,5 +203,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#e5e5e5',
   },
-  pdf: { flex: 1 },
+  pdf: { flex: 1, backgroundColor: '#e5e5e5' },
+  caption: { fontSize: 11, color: '#888', marginTop: 4, textAlign: 'right' },
 });

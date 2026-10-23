@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <stdexcept>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -112,4 +112,4 @@ bool loadResource(const std::string& url, std::vector<uint8_t>& out) {
   }
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

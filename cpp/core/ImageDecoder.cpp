@@ -19,7 +19,7 @@
 
 #include <climits>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -104,4 +104,4 @@ std::shared_ptr<const PdfImage> decodeImage(std::vector<uint8_t> bytes) {
   return nullptr;
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf

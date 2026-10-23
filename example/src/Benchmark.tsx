@@ -1,70 +1,104 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import * as Print from 'expo-print';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 import { generatePDF } from 'react-native-html-to-pdf';
-import { NitroPdf, PdfView } from 'react-native-nitro-pdf';
+import { NitroPdf } from 'react-native-nitro-pdf';
 import { invoiceHtml, receiptHtml } from './samples';
 
 declare const performance: { now(): number };
-
-type Library = 'nitro' | 'html-to-pdf';
-type Output = { pages: number; data?: ArrayBuffer; path?: string };
-type Row = {
-  label: string;
-  output?: Output;
-  generateMs?: number;
-  displayMs?: number;
-  viewerPages?: number;
-};
-type Displayed = { pages: number; at: number };
+declare function atob(data: string): string;
 
 const DOCUMENTS = [
-  { label: 'Receipt', html: receiptHtml },
-  { label: '150-row invoice', html: invoiceHtml(150) },
-  { label: '1000-row invoice', html: invoiceHtml(1000) },
+  { label: 'Receipt', html: receiptHtml, runs: 10 },
+  { label: '150-row invoice', html: invoiceHtml(150), runs: 10 },
+  { label: '1000-row invoice', html: invoiceHtml(1000), runs: 5 },
+];
+const OUTPUTS = ['File', 'Base64', 'Bytes'] as const;
+type Output = (typeof OUTPUTS)[number];
+type Generate = (html: string, name: string) => Promise<void>;
+type Library = 'nitro' | 'htmlToPdf' | 'expoPrint';
+type Row = { label: string } & Partial<Record<Library, number>>;
+
+const dir = ReactNativeBlobUtil.fs.dirs.CacheDir;
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+// Every library prints A4 (595 x 842 pt) without margins and produces the same artifact per output.
+function nitro(output: Output): Generate {
+  return async (html, name) => {
+    const pdf = await NitroPdf.generate({
+      html,
+      pageSize: 'A4',
+      margins: { top: 0, right: 0, bottom: 0, left: 0 },
+    });
+    if (output === 'File') await pdf.saveToFile(`${dir}/${name}.pdf`);
+    if (output === 'Base64') pdf.toBase64();
+    if (output === 'Bytes') new Uint8Array(pdf.toArrayBuffer());
+  };
+}
+
+function htmlToPdf(output: Output): Generate {
+  return async (html, name) => {
+    // html-to-pdf rejects a call made right after the previous one resolves, so retry briefly.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const result = await generatePDF({
+          html,
+          fileName: name,
+          directory: 'benchmark',
+          width: 595,
+          height: 842,
+          base64: output !== 'File',
+        });
+        if (output === 'Bytes') base64ToBytes(result.base64 ?? '');
+        return;
+      } catch (e) {
+        if (attempt === 5) throw e;
+        await new Promise<void>(resolve => setTimeout(resolve, 10));
+      }
+    }
+  };
+}
+
+function expoPrint(output: Output): Generate {
+  return async html => {
+    const result = await Print.printToFileAsync({
+      html,
+      width: 595,
+      height: 842,
+      margins: { top: 0, right: 0, bottom: 0, left: 0 },
+      base64: output !== 'File',
+    });
+    if (output === 'Bytes') base64ToBytes(result.base64 ?? '');
+  };
+}
+
+const LIBRARIES: {
+  key: Library;
+  title: string;
+  make: (output: Output) => Generate;
+}[] = [
+  { key: 'nitro', title: 'nitro-pdf', make: nitro },
+  { key: 'htmlToPdf', title: 'html-to-pdf', make: htmlToPdf },
+  { key: 'expoPrint', title: 'expo-print', make: expoPrint },
 ];
 
-// Both libraries print A4 (595 × 842 pt) without margins, and are shown in the same <PdfView>.
-const LIBRARIES: Record<
-  Library,
-  {
-    title: string;
-    output: string;
-    color: string;
-    generate(html: string, name: string): Promise<Output>;
-  }
-> = {
-  nitro: {
-    title: 'react-native-nitro-pdf',
-    output: 'ArrayBuffer in memory',
-    color: '#5f259f',
-    async generate(html) {
-      const pdf = await NitroPdf.generate({
-        html,
-        pageSize: 'A4',
-        margins: { top: 0, right: 0, bottom: 0, left: 0 },
-      });
-      return { pages: pdf.pageCount, data: pdf.toArrayBuffer() };
-    },
-  },
-  'html-to-pdf': {
-    title: 'react-native-html-to-pdf',
-    output: 'File on disk',
-    color: '#1f6feb',
-    async generate(html, name) {
-      const result = await generatePDF({
-        html,
-        fileName: name,
-        directory: 'benchmark',
-        width: 595,
-        height: 842,
-      });
-      return {
-        pages: Number(result.numberOfPages ?? 0),
-        path: result.filePath,
-      };
-    },
-  },
-};
+async function time(task: () => Promise<void>): Promise<number> {
+  const start = performance.now();
+  await task();
+  return performance.now() - start;
+}
+
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
+}
 
 function formatMs(ms?: number): string {
   if (ms === undefined) return '…';
@@ -72,193 +106,128 @@ function formatMs(ms?: number): string {
 }
 
 export function Benchmark() {
-  const [ready, setReady] = useState(false);
-  const [running, setRunning] = useState(false);
-  const [library, setLibrary] = useState<Library>();
+  const [output, setOutput] = useState<Output>('File');
   const [rows, setRows] = useState<Row[]>([]);
-  const [shown, setShown] = useState<number>();
-  const [runId, setRunId] = useState(0);
-  const [error, setError] = useState<string>();
-  const display = useRef<{
-    resolve(value: Displayed): void;
-    reject(error: Error): void;
-  }>(undefined);
+  const [status, setStatus] = useState('Warming up…');
+  const [running, setRunning] = useState(true);
 
   useEffect(() => {
-    // First calls pay one-off start-up costs (e.g. creating a WebView), so warm both up.
+    // First calls pay one-off start-up costs (e.g. creating a WebView), so keep them out of the numbers.
     (async () => {
-      await LIBRARIES.nitro.generate(receiptHtml, 'warmup');
-      await LIBRARIES['html-to-pdf'].generate(receiptHtml, 'warmup');
+      for (const lib of LIBRARIES)
+        await lib.make('File')(receiptHtml, 'warmup');
     })()
-      .catch(e => setError(String(e)))
+      .catch(e => setStatus(String(e)))
       .finally(() => {
-        setReady(true);
+        setRunning(false);
+        setStatus('');
         console.log('BENCH_READY');
       });
   }, []);
 
-  const run = async (lib: Library) => {
-    const results: Row[] = DOCUMENTS.map(doc => ({ label: doc.label }));
-    setLibrary(lib);
-    setRunId(id => id + 1);
-    setRows(results);
-    setError(undefined);
+  const run = async () => {
     setRunning(true);
+    const results: Row[] = DOCUMENTS.map(doc => ({ label: doc.label }));
+    setRows(results);
     try {
       for (const [index, doc] of DOCUMENTS.entries()) {
-        // Untimed pause: lets the viewer finish with the previous PDF, so each step starts idle.
-        await new Promise<void>(resolve => setTimeout(resolve, 600));
-        const start = performance.now();
-        const output = await LIBRARIES[lib].generate(doc.html, `doc-${index}`);
-        const generated = performance.now();
-        const displayed = new Promise<Displayed>((resolve, reject) => {
-          display.current = { resolve, reject };
-        });
+        setStatus(`Running: ${doc.label}`);
+        const times: Record<Library, number[]> = {
+          nitro: [],
+          htmlToPdf: [],
+          expoPrint: [],
+        };
+        // Alternate the libraries so all of them see the same device conditions.
+        for (let i = 0; i <= doc.runs; i++) {
+          for (const lib of LIBRARIES) {
+            const generate = lib.make(output);
+            const ms = await time(() => generate(doc.html, `doc-${index}`));
+            if (i > 0) times[lib.key].push(ms);
+          }
+        }
         results[index] = {
-          ...results[index],
-          output,
-          generateMs: generated - start,
+          label: doc.label,
+          nitro: median(times.nitro),
+          htmlToPdf: median(times.htmlToPdf),
+          expoPrint: median(times.expoPrint),
         };
         setRows([...results]);
-        setShown(index);
-        const { pages, at } = await displayed;
-        results[index] = {
-          ...results[index],
-          viewerPages: pages,
-          displayMs: at - generated,
-        };
-        setRows([...results]);
-        const row = results[index];
-        console.log(
-          `BENCH_ROW ${lib} ${index} generateMs=${row.generateMs?.toFixed(1)} ` +
-            `displayMs=${row.displayMs?.toFixed(1)} pages=${output.pages} viewerPages=${pages}`,
-        );
+        console.log(`BENCH_RESULT ${output} ${JSON.stringify(results[index])}`);
       }
-      console.log(`BENCH_DONE ${lib}`);
+      setStatus('');
+      console.log('BENCH_DONE');
     } catch (e) {
-      setError(String(e));
-      console.log(`BENCH_ERROR ${lib} ${String(e)}`);
+      setStatus(String(e));
+      console.log(`BENCH_ERROR ${String(e)}`);
     } finally {
       setRunning(false);
     }
   };
 
-  const onLoad = (pages: number) => {
-    display.current?.resolve({ pages, at: performance.now() });
-    display.current = undefined;
-  };
-  const onError = (message: string) => {
-    display.current?.reject(new Error(message));
-    display.current = undefined;
-  };
-
-  const current = library && LIBRARIES[library];
-  const output = shown !== undefined ? rows[shown]?.output : undefined;
-  const done = rows.filter(row => row.displayMs !== undefined);
-  const total = (key: 'generateMs' | 'displayMs') =>
-    done.reduce((sum, row) => sum + (row[key] ?? 0), 0);
-  const filesWritten = done.filter(row => row.output?.path).length;
-
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Generate → display</Text>
+      <Text style={styles.heading}>HTML to PDF</Text>
       <Text style={styles.caption}>
-        Three documents, one after another, shown in the same {'<PdfView>'}.
+        react-native-nitro-pdf, react-native-html-to-pdf and expo-print generate
+        the same documents. Median time per PDF.
       </Text>
-      <View style={styles.buttons}>
-        {(Object.keys(LIBRARIES) as Library[]).map(lib => (
+      <View style={styles.chips}>
+        {OUTPUTS.map(option => (
           <Pressable
-            key={lib}
-            disabled={!ready || running}
-            onPress={() => run(lib)}
-            style={[
-              styles.button,
-              { backgroundColor: LIBRARIES[lib].color },
-              (!ready || running) && styles.disabled,
-            ]}
+            key={option}
+            disabled={running}
+            onPress={() => setOutput(option)}
+            style={[styles.chip, option === output && styles.chipActive]}
           >
-            <Text style={styles.buttonText}>{LIBRARIES[lib].title}</Text>
+            <Text
+              style={[
+                styles.chipText,
+                option === output && styles.chipTextActive,
+              ]}
+            >
+              {option}
+            </Text>
           </Pressable>
         ))}
       </View>
+      <Pressable
+        disabled={running}
+        onPress={run}
+        style={[styles.button, running && styles.disabled]}
+      >
+        <Text style={styles.buttonText}>Run benchmark</Text>
+      </Pressable>
 
-      {current && (
-        <>
-          <Text style={[styles.title, { color: current.color }]}>
-            {current.title}
-          </Text>
-          <Text style={styles.caption}>Output: {current.output}</Text>
-          <View style={styles.table}>
-            <View style={styles.row}>
-              <Text style={[styles.cell, styles.first, styles.head]}>
-                Document
-              </Text>
-              <Text style={[styles.cell, styles.head]}>Generate</Text>
-              <Text style={[styles.cell, styles.head]}>Display</Text>
-              <Text style={[styles.cell, styles.head]}>Total</Text>
-              <Text style={[styles.cell, styles.head]}>Pages</Text>
-            </View>
-            {rows.map((row, index) => (
-              <Pressable
-                key={row.label}
-                disabled={running || !row.output}
-                onPress={() => setShown(index)}
-                style={[styles.row, shown === index && styles.selected]}
-              >
-                <Text style={[styles.cell, styles.first]}>{row.label}</Text>
-                <Text style={styles.cell}>{formatMs(row.generateMs)}</Text>
-                <Text style={styles.cell}>{formatMs(row.displayMs)}</Text>
-                <Text style={styles.cell}>
-                  {row.displayMs === undefined
-                    ? '…'
-                    : formatMs((row.generateMs ?? 0) + row.displayMs)}
+      <View style={styles.table}>
+        <View style={styles.row}>
+          <Text style={[styles.cell, styles.first, styles.head]}>Document</Text>
+          {LIBRARIES.map(lib => (
+            <Text key={lib.key} style={[styles.cell, styles.head]}>
+              {lib.title}
+            </Text>
+          ))}
+        </View>
+        {rows.map(row => (
+          <View key={row.label} style={styles.row}>
+            <Text style={[styles.cell, styles.first]}>{row.label}</Text>
+            {LIBRARIES.map(lib => (
+              <View key={lib.key} style={styles.cellBox}>
+                <Text
+                  style={[styles.value, lib.key === 'nitro' && styles.nitro]}
+                >
+                  {formatMs(row[lib.key])}
                 </Text>
-                <Text style={styles.cell}>
-                  {row.viewerPages === undefined
-                    ? '…'
-                    : row.viewerPages === row.output?.pages
-                      ? `${row.viewerPages} ✓`
-                      : `${row.viewerPages}/${row.output?.pages} ✗`}
-                </Text>
-              </Pressable>
+                {lib.key !== 'nitro' && row.nitro && row[lib.key] ? (
+                  <Text style={[styles.value, styles.ratio]}>
+                    {`${(row[lib.key]! / row.nitro).toFixed(1)}x slower`}
+                  </Text>
+                ) : null}
+              </View>
             ))}
-            <View style={[styles.row, styles.totals]}>
-              <Text style={[styles.cell, styles.first, styles.head]}>
-                Total
-              </Text>
-              <Text style={[styles.cell, styles.head]}>
-                {formatMs(total('generateMs'))}
-              </Text>
-              <Text style={[styles.cell, styles.head]}>
-                {formatMs(total('displayMs'))}
-              </Text>
-              <Text style={[styles.cell, styles.head]}>
-                {formatMs(total('generateMs') + total('displayMs'))}
-              </Text>
-              <Text style={[styles.cell, styles.head]}>
-                {done.reduce((sum, row) => sum + (row.viewerPages ?? 0), 0)}
-              </Text>
-            </View>
           </View>
-          <Text style={styles.caption}>
-            Files written to disk: {filesWritten}
-            {error ? `  ·  ${error}` : ''}
-          </Text>
-        </>
-      )}
-
-      <View style={styles.viewer}>
-        {output && (
-          <PdfView
-            key={`${runId}-${shown}`}
-            style={styles.pdf}
-            data={output.data}
-            path={output.path}
-            onLoad={onLoad}
-            onError={onError}
-          />
-        )}
+        ))}
       </View>
+      {status ? <Text style={styles.caption}>{status}</Text> : null}
     </View>
   );
 }
@@ -267,30 +236,38 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: 'white' },
   heading: { fontSize: 22, fontWeight: '700', color: '#111' },
   caption: { fontSize: 13, color: '#555', marginTop: 4 },
-  buttons: { flexDirection: 'row', gap: 8, marginVertical: 12 },
-  button: { flex: 1, borderRadius: 8, padding: 10, alignItems: 'center' },
-  buttonText: { color: 'white', fontWeight: '600', fontSize: 13 },
+  chips: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  chip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  chipActive: { backgroundColor: '#5f259f', borderColor: '#5f259f' },
+  chipText: { fontSize: 14, color: '#333' },
+  chipTextActive: { color: 'white' },
+  button: {
+    marginVertical: 12,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: '#5f259f',
+  },
+  buttonText: { color: 'white', fontWeight: '600', fontSize: 15 },
   disabled: { opacity: 0.4 },
-  title: { fontSize: 18, fontWeight: '700' },
   table: {
-    marginTop: 8,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#ccc',
     borderRadius: 8,
     overflow: 'hidden',
   },
-  row: { flexDirection: 'row', paddingVertical: 6, paddingHorizontal: 8 },
-  selected: { backgroundColor: '#f2f2f6' },
-  totals: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#ccc' },
+  row: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 8 },
   cell: { flex: 1, fontSize: 13, color: '#222', textAlign: 'right' },
-  first: { flex: 1.8, textAlign: 'left' },
+  cellBox: { flex: 1 },
+  value: { fontSize: 13, color: '#222', textAlign: 'right' },
+  first: { flex: 1.3, textAlign: 'left' },
   head: { fontWeight: '700' },
-  viewer: {
-    flex: 1,
-    marginTop: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#e5e5e5',
-  },
-  pdf: { flex: 1 },
+  nitro: { color: '#5f259f', fontWeight: '700' },
+  ratio: { fontSize: 11, color: '#888' },
 });

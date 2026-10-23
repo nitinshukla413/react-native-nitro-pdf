@@ -10,5 +10,3 @@ export type {
 
 export const NitroPdf =
   NitroModules.createHybridObject<NitroPdfSpec>('NitroPdf')
-
-export { PdfView, type PdfViewProps } from './PdfView'

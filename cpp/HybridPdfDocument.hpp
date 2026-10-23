@@ -15,6 +15,7 @@ public:
   double getPageCount() override { return double(_pageCount); }
   double getByteLength() override { return double(_bytes->size()); }
   std::shared_ptr<ArrayBuffer> toArrayBuffer() override;
+  std::string toBase64() override;
   std::shared_ptr<Promise<void>> saveToFile(const std::string& path) override;
 
   size_t getExternalMemorySize() noexcept override { return _bytes->size(); }

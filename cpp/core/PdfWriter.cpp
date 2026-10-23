@@ -8,7 +8,7 @@
 #include <string_view>
 #include <zlib.h>
 
-namespace nitropdf {
+namespace margelo::nitro::nitropdf {
 
 namespace {
 
@@ -303,4 +303,4 @@ std::vector<uint8_t> PdfWriter::finish() {
   return std::move(out.bytes);
 }
 
-} // namespace nitropdf
+} // namespace margelo::nitro::nitropdf
