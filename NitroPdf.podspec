@@ -28,7 +28,12 @@ Pod::Spec.new do |s|
 
   litehtml = "$(PODS_TARGET_SRCROOT)/cpp/third_party/litehtml"
   s.pod_target_xcconfig = {
-    "HEADER_SEARCH_PATHS" => "\"#{litehtml}/include\"",
+    # NitroModules' headers use quoted includes across folders, which header maps used to resolve.
+    "HEADER_SEARCH_PATHS" => [
+      "\"#{litehtml}/include\"",
+      "\"$(PODS_ROOT)/Headers/Public/NitroModules\"",
+      "\"$(PODS_ROOT)/Headers/Private/NitroModules\"",
+    ].join(" "),
     # Header maps match file names case-insensitively across all pods, so litehtml's "iterators.h"
     # would resolve to folly's "Iterators.h" (and gumbo's "error.h" to React's "Error.h").
     "USE_HEADERMAP" => "NO",
